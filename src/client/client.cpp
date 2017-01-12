@@ -1714,6 +1714,29 @@ void Client::UDPSend_Control()
     }
 }
 
+void Client::UDPSend_WithDelay()
+{
+    AddressedMessage* aMessage = udp->GetNextMessageToSend();
+    while (aMessage)
+    {
+        if (aMessage->GetAge() < 0.5 && aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
+        {
+            if (leakyBucketUpload) //If do exist leaky bucket 
+            {
+                //If only data passes the leaky bucket
+                if (!XPConfig::Instance()->GetBool("leakyBucketDataFilter") || aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
+                    while (!leakyBucketUpload->DecToken(aMessage->GetMessage()->GetSize())); //while leaky bucket cannot provide
+            }
+
+            udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
+            
+            chunksSent++;
+        }
+
+        aMessage = udp->GetNextMessageToSend();
+    }
+}
+
 void Client::CreateLogFiles()
 {
     time_t rawtime;
