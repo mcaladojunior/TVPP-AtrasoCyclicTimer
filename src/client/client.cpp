@@ -1699,9 +1699,9 @@ void Client::UDPSend()
     }
 }
 
-void Client::UDPSend_Control()
+void Client::UDPSendControlMSG()
 {
-    while(true)
+    while(!quit)
     {
         AddressedMessage* aMessage = udp->GetNextMessageToSend();
         if (aMessage)
@@ -1714,12 +1714,12 @@ void Client::UDPSend_Control()
     }
 }
 
-void Client::UDPSend_WithDelay()
+void Client::UDPSendWithDelay()
 {
     AddressedMessage* aMessage = udp->GetNextMessageToSend();
     while (aMessage)
     {
-        if (aMessage->GetAge() < 0.5 && aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
+        if (aMessage->GetAge() < 0.5) // If message older than 500 ms
         {
             if (leakyBucketUpload) //If do exist leaky bucket 
             {
@@ -1727,10 +1727,10 @@ void Client::UDPSend_WithDelay()
                 if (!XPConfig::Instance()->GetBool("leakyBucketDataFilter") || aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
                     while (!leakyBucketUpload->DecToken(aMessage->GetMessage()->GetSize())); //while leaky bucket cannot provide
             }
-
             udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
-            
-            chunksSent++;
+
+            if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA)
+               chunksSent++;
         }
 
         aMessage = udp->GetNextMessageToSend();

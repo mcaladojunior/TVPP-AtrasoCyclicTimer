@@ -93,8 +93,8 @@ class Client
         void UDPStart();
         void UDPReceive();
         void UDPSend();
-        void UDPSend_Control();
-        void UDPSend_WithDelay();
+        void UDPSendControlMSG(); //Msg de controle.
+        void UDPSendWithDelay(); //Atraso.
 
         void Exit();
 
