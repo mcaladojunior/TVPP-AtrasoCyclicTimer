@@ -353,8 +353,21 @@ int main (int argc, char* argv[])
     boost::thread TPING(boost::bind(&Client::Ping, &clientInstance));
     boost::thread TUDPSTART(boost::bind(&Client::UDPStart, &clientInstance));
     boost::thread TUDPRECEIVE(boost::bind(&Client::UDPReceive, &clientInstance));
-    boost::thread TUDPSEND(boost::bind(&Client::UDPSend, &clientInstance));
     boost::thread TTIMER(boost::bind(&Client::CyclicTimers, &clientInstance));
+
+    //Atraso.
+    //If delayToSend parameter was not settup, execute the normal thread to send udp msgs...
+    if(delayToSend == 0)
+    {
+        boost::thread TUDPSEND(boost::bind(&Client::UDPSend, &clientInstance));
+    }
+    else
+    {
+        //  If delayToSend parameter was settup, execute a thread to send control msgs, 
+        //and the thread TTIMER (CyclicTimers) will send the udp msgs at each cycle of time.
+        boost::thread TUDPSEND_CONTROL(boost::bind(&Client::UDPSend_Control, &clientInstance));
+    }
+    
     if (mode == 1) //MODE_SERVER
     {
         boost::thread TGERAR(boost::bind(&Client::GerarDados, &clientInstance));
