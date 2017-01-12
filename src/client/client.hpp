@@ -94,6 +94,7 @@ class Client
         void UDPReceive();
         void UDPSend();
         void UDPSend_Control();
+        void UDPSend_WithDelay();
 
         void Exit();
 
