@@ -355,7 +355,7 @@ int main (int argc, char* argv[])
     boost::thread TUDPRECEIVE(boost::bind(&Client::UDPReceive, &clientInstance));
     boost::thread TTIMER(boost::bind(&Client::CyclicTimers, &clientInstance));
 
-    //Atraso...
+    //Atraso.
     //If delayToSend parameter was not settup, execute the normal thread to send udp msgs...
     if(delayToSend == 0)
     {

@@ -1699,21 +1699,6 @@ void Client::UDPSend()
     }
 }
 
-void Client::UDPSend_Control()
-{
-    while(true)
-    {
-        AddressedMessage* aMessage = udp->GetNextMessageToSend();
-        if (aMessage)
-        {
-            if (aMessage->GetAge() < 0.5 && aMessage->GetMessage()->GetOpcode() != OPCODE_DATA) 
-            {
-                udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
-            }
-        }
-    }
-}
-
 void Client::CreateLogFiles()
 {
     time_t rawtime;

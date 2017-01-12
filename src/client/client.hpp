@@ -93,7 +93,6 @@ class Client
         void UDPStart();
         void UDPReceive();
         void UDPSend();
-        void UDPSend_Control();
 
         void Exit();
 
