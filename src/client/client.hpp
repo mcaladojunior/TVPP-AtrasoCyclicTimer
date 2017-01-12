@@ -78,7 +78,7 @@ class Client
             string disconnectorStrategyIn, string disconnectorStrategyOut, int quantityDisconnect,
 			string connectorStrategy, unsigned int minimalBandwidthToBeMyIN, int timeToRemovePeerOutWorseBand,
 			string chunkSchedulerStrategy, string messageSendScheduler, string messageReceptionScheduler,
-			int maxPartnersOutFREE, unsigned int outLimitToSeparateFree);
+			int maxPartnersOutFREE, unsigned int outLimitToSeparateFree, unsigned int delayToSend);
         virtual void Ping();
         void CyclicTimers();
         void PeerCtoPeerA();
@@ -144,6 +144,8 @@ class Client
 		bool configurarBootID;   //controla a autenticação do bootstrapID no primeiro contato com o bootstrap
 		uint32_t bootStrapID_Autentic;
 
+
+        unsigned int delayToSend; //Atraso.
 
 		//ECM
 		Disconnector* disconnectorIn;
