@@ -66,6 +66,8 @@ int main (int argc, char* argv[])
     int limitDownload = -1;
     int limitUpload = -1;
 
+    unsigned int delayToSend = 0; //Atraso.
+
     																// ** Used for disconnector
 	string disconnectorStrategyIn = "None";                         //ECM separate In and Out to be possible disconnect only Out or In or both
 	string disconnectorStrategyOut = "None";                        //ECM ensures that make peerListOut new connections
@@ -138,6 +140,8 @@ int main (int argc, char* argv[])
             cout <<"  --clientLogsDisabled          disables client logging service"<<endl;
             cout <<"  --leakyBucketDataFilter       forces data packets only to pass through upload leaky bucket"<<endl;
             cout <<"  --serverCandidate             permits that peer becomes a auxiliary server on parallel network"<<endl;
+            cout <<"                  ***           "<<endl;
+            cout <<"  --delayToSend                 define a delay in milliseconds to send messages [0-500].           "<<endl;
             exit(1);
         }
         else
@@ -292,7 +296,6 @@ int main (int argc, char* argv[])
             minimalBandwidthToBeMyIN = atoi(argv[optind]);
             connectorStrategy = "RandomWhitoutPoorFREE";
         }
-
         else if (swtc=="-chunkSchedulerStrategy")
         {
             optind++;
@@ -328,6 +331,11 @@ int main (int argc, char* argv[])
         {
             XPConfig::Instance()->SetBool("serverCandidate", true);
         }
+        else if (swtc=="--delayToSend") //Atraso.
+        {
+            optind++;
+            delayToSend = atoi(argv[optind]);
+        }
         else
         {
             cout << "Invalid Arguments. Try --help"<<endl;
@@ -340,7 +348,7 @@ int main (int argc, char* argv[])
                                 peerPort, streamingPort, mode, bufferSize, 
                                 maxPartnersIn, maxPartnersOut, windowOfInterest, requestLimit, ttlIn, ttlOut, maxRequestAttempt, tipOffsetTime, limitDownload, limitUpload,
                                 disconnectorStrategyIn, disconnectorStrategyOut, quantityDisconnect, connectorStrategy, minimalBandwidthToBeMyIN, timeToRemovePeerOutWorseBand,
-								chunkSchedulerStrategy, messageSendScheduler, messageReceiveScheduler, maxPartnersOutFREE, outLimitToSeparateFree);
+								chunkSchedulerStrategy, messageSendScheduler, messageReceiveScheduler, maxPartnersOutFREE, outLimitToSeparateFree, delayToSend);
     
     boost::thread TPING(boost::bind(&Client::Ping, &clientInstance));
     boost::thread TUDPSTART(boost::bind(&Client::UDPStart, &clientInstance));
