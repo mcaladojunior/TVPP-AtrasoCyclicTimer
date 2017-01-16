@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <list>
 #include <ctime>
+#include <queue>  
 
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
@@ -147,7 +148,8 @@ class Client
 		uint32_t bootStrapID_Autentic;
 
 
-        unsigned int delayToSend; //Atraso.
+        unsigned int delayToSend; // Parâmetro para atraso de envio.
+        std::queue<AddressedMessage*> chunkMsgsToSend; // Fila de msg de chunk a ser enviado a cada intervalo.
 
 		//ECM
 		Disconnector* disconnectorIn;

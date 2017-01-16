@@ -51,7 +51,7 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
     this->configurarBootID = true;
     this->timeToRemovePeerOutWorseBand = timeToRemovePeerOutWorseBand;
 
-    this->delayToSend = delayToSend; //Atraso.
+    this->delayToSend = delayToSend; // Parâmetro para atraso de envio.
 
     if (limitDownload >= 0)
         this->leakyBucketDownload = new LeakyBucket(limitDownload);
@@ -1706,9 +1706,12 @@ void Client::UDPSendControlMSG()
         AddressedMessage* aMessage = udp->GetNextMessageToSend();
         if (aMessage)
         {
-            if (aMessage->GetAge() < 0.5 && aMessage->GetMessage()->GetOpcode() != OPCODE_DATA) 
+            if (aMessage->GetAge() < 0.5) // If message is not older than 500 ms...
             {
-                udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
+                if(aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) // If msg is a chunk...
+                    chunkMsgsToSend.push(aMessage); // Push into chunkMsgsToSend queue...
+                else
+                    udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
             }
         }
     }
@@ -1722,6 +1725,29 @@ void Client::UDPSendChunkMSG()
     {
         boost::xtime_get(&xt, boost::TIME_UTC);
         xt.nsec += this->delayToSend*1000000;
+
+        while (!chunkMsgsToSend.empty()) 
+        {
+            AddressedMessage* aMessage = chunkMsgsToSend.front();
+            if (aMessage)
+            {
+                if (aMessage->GetAge() < 0.5) // If message older than 500 ms
+                {
+                    if (leakyBucketUpload) //If do exist leaky bucket 
+                    {
+                        //If only data passes the leaky bucket
+                        if (!XPConfig::Instance()->GetBool("leakyBucketDataFilter") || aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
+                            while (!leakyBucketUpload->DecToken(aMessage->GetMessage()->GetSize())); //while leaky bucket cannot provide
+                    }
+
+                    udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
+                    
+                    if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA)
+                       chunksSent++;
+                }
+            }
+            chunkMsgsToSend.pop();
+        }
 
         AddressedMessage* aMessage = udp->GetNextMessageToSend();
         while (aMessage)
