@@ -1714,26 +1714,36 @@ void Client::UDPSendControlMSG()
     }
 }
 
-void Client::UDPSendWithDelay()
+void Client::UDPSendChunkMSG()
 {
-    AddressedMessage* aMessage = udp->GetNextMessageToSend();
-    while (aMessage)
-    {
-        if (aMessage->GetAge() < 0.5) // If message older than 500 ms
-        {
-            if (leakyBucketUpload) //If do exist leaky bucket 
-            {
-                //If only data passes the leaky bucket
-                if (!XPConfig::Instance()->GetBool("leakyBucketDataFilter") || aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
-                    while (!leakyBucketUpload->DecToken(aMessage->GetMessage()->GetSize())); //while leaky bucket cannot provide
-            }
-            udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
+    boost::xtime xt;
 
-            if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA)
-               chunksSent++;
+    while(!quit) 
+    {
+        boost::xtime_get(&xt, boost::TIME_UTC);
+        xt.nsec += this->delayToSend*1000000;
+
+        AddressedMessage* aMessage = udp->GetNextMessageToSend();
+        while (aMessage)
+        {
+            if (aMessage->GetAge() < 0.5) // If message older than 500 ms
+            {
+                if (leakyBucketUpload) //If do exist leaky bucket 
+                {
+                    //If only data passes the leaky bucket
+                    if (!XPConfig::Instance()->GetBool("leakyBucketDataFilter") || aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
+                        while (!leakyBucketUpload->DecToken(aMessage->GetMessage()->GetSize())); //while leaky bucket cannot provide
+                }
+                udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
+                
+                if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA)
+                   chunksSent++;
+            }
+
+            aMessage = udp->GetNextMessageToSend();
         }
 
-        aMessage = udp->GetNextMessageToSend();
+        boost::thread::sleep(xt);
     }
 }
 

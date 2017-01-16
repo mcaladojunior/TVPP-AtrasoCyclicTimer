@@ -364,8 +364,9 @@ int main (int argc, char* argv[])
     else
     {
         //  If delayToSend parameter was settup, execute a thread to send control msgs, 
-        //and the thread TTIMER (CyclicTimers) will send the udp msgs at each cycle of time.
+        //and the thread to send chunk msgs at each cycle of time.
         boost::thread TUDPSEND_CONTROL(boost::bind(&Client::UDPSendControlMSG, &clientInstance));
+        boost::thread TUDPSEND_CHUNK(boost::bind(&Client::UDPSendChunkMSG, &clientInstance));
     }
     
     if (mode == 1) //MODE_SERVER
