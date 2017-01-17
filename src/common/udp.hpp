@@ -31,6 +31,7 @@ public:
    void Run();
    virtual void Start();
    virtual void Stop();
+   unsigned int GetSendSchedulerSize();
      
 protected:
   bool Bind(bool mode);
