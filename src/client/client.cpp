@@ -55,8 +55,8 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
     string delimiter = "-";
     string s_limitInfDelay = delayToSend.substr(0, delayToSend.find(delimiter));
     string s_limitSupDelay = delayToSend.substr(delayToSend.find(delimiter),delayToSend.size());
-    this->limitInfDelay = atoi(s_limitInfDelay);
-    this->limitSupDelay = atoi(s_limitSupDelay);
+    this->limitInfDelay = stoi(s_limitInfDelay);
+    this->limitSupDelay = stoi(s_limitSupDelay);
 
     if (limitDownload >= 0)
         this->leakyBucketDownload = new LeakyBucket(limitDownload);
