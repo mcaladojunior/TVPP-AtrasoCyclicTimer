@@ -148,7 +148,7 @@ class Client
 
 
         unsigned int delayToSend; // Parâmetro para atraso de envio.
-        std::queue<AddressedMessage*> chunkMsgsToSend; // Fila de msg de chunk a ser enviado a cada intervalo.
+        //std::queue<AddressedMessage*> chunkMsgsToSend; // Fila de msg de chunk a ser enviado a cada intervalo.
 
 		//ECM
 		Disconnector* disconnectorIn;
