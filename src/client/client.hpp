@@ -79,7 +79,7 @@ class Client
             string disconnectorStrategyIn, string disconnectorStrategyOut, int quantityDisconnect,
 			string connectorStrategy, unsigned int minimalBandwidthToBeMyIN, int timeToRemovePeerOutWorseBand,
 			string chunkSchedulerStrategy, string messageSendScheduler, string messageReceptionScheduler,
-			int maxPartnersOutFREE, unsigned int outLimitToSeparateFree, unsigned int delayToSend);
+			int maxPartnersOutFREE, unsigned int outLimitToSeparateFree, string delayToSend);
         virtual void Ping();
         void CyclicTimers();
         void PeerCtoPeerA();
