@@ -1720,13 +1720,16 @@ void Client::UDPSendControlMSG()
 void Client::UDPSendChunkMSG()
 {
     boost::xtime xt;
+    unsigned int chunksQueueSize = 0;
 
     while(!quit) 
     {
         boost::xtime_get(&xt, boost::TIME_UTC);
         xt.nsec += this->delayToSend*1000000;
+        
+        chunksQueueSize = chunkMsgsToSend.size();
 
-        while (!chunkMsgsToSend.empty()) 
+        while (chunksQueueSize > 0) 
         {
             AddressedMessage* aMessage = chunkMsgsToSend.front();
             if (aMessage)
@@ -1747,6 +1750,8 @@ void Client::UDPSendChunkMSG()
                 }
             }
             chunkMsgsToSend.pop();
+
+            chunksQueueSize--;
         }
 
         AddressedMessage* aMessage = udp->GetNextMessageToSend();
