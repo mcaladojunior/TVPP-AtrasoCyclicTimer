@@ -66,7 +66,7 @@ int main (int argc, char* argv[])
     int limitDownload = -1;
     int limitUpload = -1;
 
-    unsigned int delayToSend = 0; //Atraso.
+    string delayToSend = "None"; //Atraso.
 
     																// ** Used for disconnector
 	string disconnectorStrategyIn = "None";                         //ECM separate In and Out to be possible disconnect only Out or In or both
@@ -141,7 +141,7 @@ int main (int argc, char* argv[])
             cout <<"  --leakyBucketDataFilter       forces data packets only to pass through upload leaky bucket"<<endl;
             cout <<"  --serverCandidate             permits that peer becomes a auxiliary server on parallel network"<<endl;
             cout <<"                  ***           "<<endl;
-            cout <<"  --delayToSend                 define a delay in milliseconds to send messages [0-500].           "<<endl;
+            cout <<"  --delayToSend  [0-500]        define a interval of delay in milliseconds to send messages.           "<<endl;
             exit(1);
         }
         else
@@ -334,7 +334,7 @@ int main (int argc, char* argv[])
         else if (swtc=="--delayToSend") //Atraso.
         {
             optind++;
-            delayToSend = atoi(argv[optind]);
+            delayToSend = argv[optind];
         }
         else
         {
@@ -357,7 +357,7 @@ int main (int argc, char* argv[])
 
     //Atraso...
     //If delayToSend parameter was not settup, execute the normal thread to send udp msgs...
-    if(delayToSend == 0)
+    if (delayToSend.compare("None") == 0)
     {
         boost::thread TUDPSEND(boost::bind(&Client::UDPSend, &clientInstance));
     }

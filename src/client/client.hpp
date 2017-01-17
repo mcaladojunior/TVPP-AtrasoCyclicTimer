@@ -147,7 +147,9 @@ class Client
 		uint32_t bootStrapID_Autentic;
 
 
-        unsigned int delayToSend; // Parâmetro para atraso de envio.
+        string delayToSend; // Parâmetro para atraso de envio.
+        unsigned int limitInfDelay;
+        unsigned int limitSupDelay;
         //std::queue<AddressedMessage*> chunkMsgsToSend; // Fila de msg de chunk a ser enviado a cada intervalo.
 
 		//ECM
