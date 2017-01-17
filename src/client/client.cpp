@@ -1699,61 +1699,15 @@ void Client::UDPSend()
     }
 }
 
-void Client::UDPSendControlMSG()
-{
-    while(!quit)
-    {
-        AddressedMessage* aMessage = udp->GetNextMessageToSend();
-        if (aMessage)
-        {
-            if (aMessage->GetAge() < 0.5) // If message is not older than 500 ms...
-            {
-                if(aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) // If msg is a chunk...
-                    chunkMsgsToSend.push(aMessage); // Push into chunkMsgsToSend queue...
-                else
-                    udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
-            }
-        }
-    }
-}
-
-void Client::UDPSendChunkMSG()
+void Client::UDPSendWithDelay()
 {
     boost::xtime xt;
-    unsigned int chunksQueueSize = 0;
 
     while(!quit) 
     {
         boost::xtime_get(&xt, boost::TIME_UTC);
         xt.nsec += this->delayToSend*1000000;
         
-        chunksQueueSize = chunkMsgsToSend.size();
-
-        while (chunksQueueSize > 0) 
-        {
-            AddressedMessage* aMessage = chunkMsgsToSend.front();
-            if (aMessage)
-            {
-                if (aMessage->GetAge() < 0.5) // If message older than 500 ms
-                {
-                    if (leakyBucketUpload) //If do exist leaky bucket 
-                    {
-                        //If only data passes the leaky bucket
-                        if (!XPConfig::Instance()->GetBool("leakyBucketDataFilter") || aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
-                            while (!leakyBucketUpload->DecToken(aMessage->GetMessage()->GetSize())); //while leaky bucket cannot provide
-                    }
-
-                    udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
-                    
-                    if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA)
-                       chunksSent++;
-                }
-            }
-            chunkMsgsToSend.pop();
-
-            chunksQueueSize--;
-        }
-
         AddressedMessage* aMessage = udp->GetNextMessageToSend();
         while (aMessage)
         {

@@ -94,8 +94,7 @@ class Client
         void UDPStart();
         void UDPReceive();
         void UDPSend();
-        void UDPSendControlMSG(); //Msg de controle.
-        void UDPSendChunkMSG(); //Atraso.
+        void UDPSendWithDelay(); // Envio com atraso.
 
         void Exit();
 
