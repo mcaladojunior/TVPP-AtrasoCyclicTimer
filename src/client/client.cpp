@@ -1732,7 +1732,22 @@ void Client::UDPSendWithDelay()
         {
             myfile << "**************" << endl;
             myfile << "sendSchedulerSize : " << sendSchedulerSize << endl;
-            myfile << "time : " << xt.nsec << endl;
+            myfile << "time XT : " << xt.nsec << endl;
+
+            struct timeval tp;
+            gettimeofday(&tp, NULL);
+            long int ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
+
+            time_t timer;
+            char buffer[26];
+            struct tm* tm_info;
+
+            time(&timer);
+            tm_info = localtime(&timer);
+
+            strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
+            myfile << buffer << ":" << ms << endl;
+
         } else cout << "Unable to open file";
 
         if(sendSchedulerSize > 0) 
