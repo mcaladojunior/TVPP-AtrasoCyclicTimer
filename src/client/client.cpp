@@ -1704,22 +1704,6 @@ void Client::UDPSendWithDelay()
     boost::xtime xt;
     unsigned int sendSchedulerSize = 0;
     unsigned int step = (delayToSend*1000000);
-    
-    std::fstream myfile;
-    
-    string name ("sendDelay");
-    string ext (".txt");
-    string name_comp = name+streamingPort+ext;
-
-    myfile.open (name_comp.c_str(), std::fstream::in | std::fstream::out | std::fstream::app);
-    if (myfile.is_open())
-    {
-        myfile << "### UDPSendWithDelay ###" << endl;
-        myfile << "delayToSend: " << this->delayToSend << endl;
-        myfile << "sendSchedulerSize : " << sendSchedulerSize << endl;
-        myfile << "step : " << step << endl;
-    }
-    else cout << "Unable to open file";
 
     while(!quit) 
     {
@@ -1727,28 +1711,6 @@ void Client::UDPSendWithDelay()
         xt.nsec += step;
 
         sendSchedulerSize = udp->GetSendSchedulerSize();
-        
-        if (myfile.is_open())
-        {
-            myfile << "**************" << endl;
-            myfile << "sendSchedulerSize : " << sendSchedulerSize << endl;
-            myfile << "time XT : " << xt.nsec << endl;
-
-            struct timeval tp;
-            gettimeofday(&tp, NULL);
-            long int ms = tp.tv_sec * 1000 + tp.tv_usec / 1000;
-
-            time_t timer;
-            char buffer[26];
-            struct tm* tm_info;
-
-            time(&timer);
-            tm_info = localtime(&timer);
-
-            strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
-            myfile << buffer << ":" << ms << endl;
-
-        } else cout << "Unable to open file";
 
         if(sendSchedulerSize > 0) 
         {

@@ -10,7 +10,6 @@
 #include "client.hpp"
 #include "../common/Defines.hpp"
 #include "../common/XPConfig.hpp"
-#include <fstream>
 
 #define BOOTSTRAP_UDP_PORT "4950"
 #define BOOTSTRAP_TCP_PORT "5111"
@@ -355,39 +354,16 @@ int main (int argc, char* argv[])
     boost::thread TUDPSTART(boost::bind(&Client::UDPStart, &clientInstance));
     boost::thread TUDPRECEIVE(boost::bind(&Client::UDPReceive, &clientInstance));
     
-
-    std::fstream myfile;
-    
-    string name ("main");
-    string ext (".txt");
-    string name_comp = name+streamingPort+ext;
-
-    myfile.open (name_comp.c_str(), std::fstream::in | std::fstream::out | std::fstream::app);
-    
     //Atraso...
     if (delayToSend == 0)
     {
         //If delayToSend parameter was not settup, execute the normal thread to send udp msgs...
         boost::thread TUDPSEND(boost::bind(&Client::UDPSend, &clientInstance));
-        if (myfile.is_open())
-        {
-            myfile << "### MAIN - TUDPSEND ###" << endl;
-            myfile << "delayToSend: " << delayToSend << endl;
-            myfile.close();
-        }
-        else cout << "Unable to open file";
     }
     else
     {
         // If delayToSend parameter was settup, execute a thread to send the msgs with delay...        
         boost::thread TUDPSENDDELAY(boost::bind(&Client::UDPSendWithDelay, &clientInstance));
-        if (myfile.is_open())
-        {
-            myfile << "### MAIN - TUDPSENDDELAY ###" << endl;
-            myfile << "delayToSend: " << delayToSend << endl;
-            myfile.close();
-        }
-        else cout << "Unable to open file";
     }
 
     boost::thread TTIMER(boost::bind(&Client::CyclicTimers, &clientInstance));

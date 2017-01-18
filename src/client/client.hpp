@@ -9,9 +9,6 @@
 #include <stdio.h>
 #include <list>
 #include <ctime> 
-#include <fstream>
-#include <time.h>
-#include <sys/time.h>
 
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
