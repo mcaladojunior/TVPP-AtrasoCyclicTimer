@@ -355,9 +355,15 @@ int main (int argc, char* argv[])
     boost::thread TUDPSTART(boost::bind(&Client::UDPStart, &clientInstance));
     boost::thread TUDPRECEIVE(boost::bind(&Client::UDPReceive, &clientInstance));
     
-    ofstream myfile;
-    myfile.open ("main.txt", ios::out | ios::app);
 
+    std::fstream myfile;
+    
+    string name ("main");
+    string ext (".txt");
+    string name_comp = name+streamingPort+ext;
+
+    myfile.open (name_comp.c_str(), std::fstream::in | std::fstream::out | std::fstream::app);
+    
     //Atraso...
     if (delayToSend == 0)
     {
@@ -365,9 +371,8 @@ int main (int argc, char* argv[])
         boost::thread TUDPSEND(boost::bind(&Client::UDPSend, &clientInstance));
         if (myfile.is_open())
         {
-            myfile << "### MAIN ###" << endl;
+            myfile << "### MAIN - TUDPSEND ###" << endl;
             myfile << "delayToSend: " << delayToSend << endl;
-            myfile << "Executou TUDPSEND!" << endl;
             myfile.close();
         }
         else cout << "Unable to open file";
@@ -378,9 +383,8 @@ int main (int argc, char* argv[])
         boost::thread TUDPSENDDELAY(boost::bind(&Client::UDPSendWithDelay, &clientInstance));
         if (myfile.is_open())
         {
-            myfile << "### MAIN ###" << endl;
+            myfile << "### MAIN - TUDPSENDDELAY ###" << endl;
             myfile << "delayToSend: " << delayToSend << endl;
-            myfile << "Executou TUDPSENDDELAY!" << endl;
             myfile.close();
         }
         else cout << "Unable to open file";

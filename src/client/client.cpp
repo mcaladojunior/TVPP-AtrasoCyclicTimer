@@ -1705,8 +1705,13 @@ void Client::UDPSendWithDelay()
     unsigned int sendSchedulerSize = 0;
     unsigned int step = (delayToSend*1000000);
     
-    ofstream myfile;
-    myfile.open ("clientSend.txt", ios::out | ios::app);
+    std::fstream myfile;
+    
+    string name ("sendDelay");
+    string ext (".txt");
+    string name_comp = name+streamingPort+ext;
+
+    myfile.open (name_comp.c_str(), std::fstream::in | std::fstream::out | std::fstream::app);
     if (myfile.is_open())
     {
         myfile << "### UDPSendWithDelay ###" << endl;
@@ -1723,15 +1728,12 @@ void Client::UDPSendWithDelay()
 
         sendSchedulerSize = udp->GetSendSchedulerSize();
         
-        ofstream myfile2;
-        string name = "client"+this->streamingPort+".txt";
-        myfile2.open (name, ios::out | ios::app);
-        if (myfile2.is_open())
+        if (myfile.is_open())
         {
-            myfile2 << "**************" << endl;
-            myfile2 << "sendSchedulerSize : " << sendSchedulerSize << endl;
-            myfile2 << "time : " << xt.nsec << endl;
-        }
+            myfile << "**************" << endl;
+            myfile << "sendSchedulerSize : " << sendSchedulerSize << endl;
+            myfile << "time : " << xt.nsec << endl;
+        } else cout << "Unable to open file";
 
         if(sendSchedulerSize > 0) 
         {
