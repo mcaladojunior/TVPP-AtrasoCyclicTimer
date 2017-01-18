@@ -22,7 +22,7 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
 			string connectorStrategy, unsigned int minimalBandwidthToBeMyIN,
 			int timeToRemovePeerOutWorseBand, string chunkSchedulerStrategy,
             string messageSendScheduler, string messageReceiveScheduler,
-			int maxPartnersOutFREE, unsigned int outLimitToSeparateFree, string delayToSend)
+			int maxPartnersOutFREE, unsigned int outLimitToSeparateFree, unsigned int delayToSend)
 {
     cout <<"Starting Client Version["<<VERSION<<"]" <<endl;
     Bootstrap_IP = host_ip;
@@ -52,11 +52,6 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
     this->timeToRemovePeerOutWorseBand = timeToRemovePeerOutWorseBand;
 
     this->delayToSend = delayToSend; // Parâmetro para atraso de envio.
-    string delimiter = "-";
-    string s_limitInfDelay = delayToSend.substr(0, delayToSend.find(delimiter));
-    string s_limitSupDelay = delayToSend.substr(delayToSend.find(delimiter)+1,delayToSend.size());
-    this->limitInfDelay = atoi(s_limitInfDelay.c_str());
-    this->limitSupDelay = atoi(s_limitSupDelay.c_str());
 
     if (limitDownload >= 0)
         this->leakyBucketDownload = new LeakyBucket(limitDownload);
@@ -1708,7 +1703,19 @@ void Client::UDPSendWithDelay()
 {
     boost::xtime xt;
     unsigned int sendSchedulerSize = 0;
-    unsigned int step = 0;
+    unsigned int step = (delayToSend*1000000);
+    
+    ofstream myfile;
+    myfile.open ("example.txt");
+    if (myfile.is_open())
+    {
+        myfile << "### UDPSendWithDelay ###" << endl;
+        myfile << "delayToSend: " << this->delayToSend << endl;
+        myfile << "sendSchedulerSize : " << sendSchedulerSize << endl;
+        myfile << "step : " << step << endl;
+        myfile.close();
+    }
+    else cout << "Unable to open file";
 
     while(!quit) 
     {

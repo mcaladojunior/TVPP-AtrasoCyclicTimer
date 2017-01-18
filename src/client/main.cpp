@@ -10,6 +10,7 @@
 #include "client.hpp"
 #include "../common/Defines.hpp"
 #include "../common/XPConfig.hpp"
+#include <fstream>
 
 #define BOOTSTRAP_UDP_PORT "4950"
 #define BOOTSTRAP_TCP_PORT "5111"
@@ -66,7 +67,7 @@ int main (int argc, char* argv[])
     int limitDownload = -1;
     int limitUpload = -1;
 
-    string delayToSend = "None"; //Atraso.
+    unsigned int delayToSend = 0; //Atraso.
 
     																// ** Used for disconnector
 	string disconnectorStrategyIn = "None";                         //ECM separate In and Out to be possible disconnect only Out or In or both
@@ -141,7 +142,7 @@ int main (int argc, char* argv[])
             cout <<"  --leakyBucketDataFilter       forces data packets only to pass through upload leaky bucket"<<endl;
             cout <<"  --serverCandidate             permits that peer becomes a auxiliary server on parallel network"<<endl;
             cout <<"                  ***           "<<endl;
-            cout <<"  --delayToSend  [0-500]        define a interval of delay in milliseconds to send messages.           "<<endl;
+            cout <<"  --delayToSend [0-500]         define a delay in milliseconds to send messages (default: 0).           "<<endl;
             exit(1);
         }
         else
@@ -334,7 +335,7 @@ int main (int argc, char* argv[])
         else if (swtc=="--delayToSend") //Atraso.
         {
             optind++;
-            delayToSend = argv[optind];
+            delayToSend = atoi(argv[optind]);
         }
         else
         {
@@ -353,20 +354,40 @@ int main (int argc, char* argv[])
     boost::thread TPING(boost::bind(&Client::Ping, &clientInstance));
     boost::thread TUDPSTART(boost::bind(&Client::UDPStart, &clientInstance));
     boost::thread TUDPRECEIVE(boost::bind(&Client::UDPReceive, &clientInstance));
-    boost::thread TTIMER(boost::bind(&Client::CyclicTimers, &clientInstance));
+    
+    ofstream myfile;
+    myfile.open ("example.txt");
 
     //Atraso...
-    //If delayToSend parameter was not settup, execute the normal thread to send udp msgs...
-    if (delayToSend.compare("None") == 0)
+    if (delayToSend == 0)
     {
+        //If delayToSend parameter was not settup, execute the normal thread to send udp msgs...
         boost::thread TUDPSEND(boost::bind(&Client::UDPSend, &clientInstance));
+        if (myfile.is_open())
+        {
+            myfile << "### MAIN ###" << endl;
+            myfile << "delayToSend: " << delayToSend << endl;
+            myfile << "Executou TUDPSEND!" << endl;
+            myfile.close();
+        }
+        else cout << "Unable to open file";
     }
     else
     {
         // If delayToSend parameter was settup, execute a thread to send the msgs with delay...        
         boost::thread TUDPSENDDELAY(boost::bind(&Client::UDPSendWithDelay, &clientInstance));
+        if (myfile.is_open())
+        {
+            myfile << "### MAIN ###" << endl;
+            myfile << "delayToSend: " << delayToSend << endl;
+            myfile << "Executou TUDPSENDDELAY!" << endl;
+            myfile.close();
+        }
+        else cout << "Unable to open file";
     }
-    
+
+    boost::thread TTIMER(boost::bind(&Client::CyclicTimers, &clientInstance));
+
     if (mode == 1) //MODE_SERVER
     {
         boost::thread TGERAR(boost::bind(&Client::GerarDados, &clientInstance));

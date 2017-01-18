@@ -8,8 +8,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <list>
-#include <ctime>
-#include <queue>  
+#include <ctime> 
 
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
@@ -79,7 +78,7 @@ class Client
             string disconnectorStrategyIn, string disconnectorStrategyOut, int quantityDisconnect,
 			string connectorStrategy, unsigned int minimalBandwidthToBeMyIN, int timeToRemovePeerOutWorseBand,
 			string chunkSchedulerStrategy, string messageSendScheduler, string messageReceptionScheduler,
-			int maxPartnersOutFREE, unsigned int outLimitToSeparateFree, string delayToSend);
+			int maxPartnersOutFREE, unsigned int outLimitToSeparateFree, unsigned int delayToSend);
         virtual void Ping();
         void CyclicTimers();
         void PeerCtoPeerA();
@@ -147,11 +146,8 @@ class Client
 		uint32_t bootStrapID_Autentic;
 
 
-        string delayToSend; // Parâmetro para atraso de envio.
-        unsigned int limitInfDelay;
-        unsigned int limitSupDelay;
-        //std::queue<AddressedMessage*> chunkMsgsToSend; // Fila de msg de chunk a ser enviado a cada intervalo.
-
+        unsigned int delayToSend; // Parâmetro para atraso de envio.
+        
 		//ECM
 		Disconnector* disconnectorIn;
 		Disconnector* disconnectorOut;
