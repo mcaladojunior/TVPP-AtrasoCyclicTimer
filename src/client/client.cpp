@@ -1720,9 +1720,6 @@ void Client::UDPSendWithDelay()
     while(!quit) 
     {
         boost::xtime_get(&xt, boost::TIME_UTC);
-
-        step = (rand()%(limitSupDelay-limitInfDelay)+limitInfDelay);
-
         xt.nsec += step;
 
         sendSchedulerSize = udp->GetSendSchedulerSize();
