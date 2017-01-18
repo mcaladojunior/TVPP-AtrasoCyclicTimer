@@ -356,7 +356,7 @@ int main (int argc, char* argv[])
     boost::thread TUDPRECEIVE(boost::bind(&Client::UDPReceive, &clientInstance));
     
     ofstream myfile;
-    myfile.open ("example.txt");
+    myfile.open ("main.txt", ios::out | ios::app);
 
     //Atraso...
     if (delayToSend == 0)
