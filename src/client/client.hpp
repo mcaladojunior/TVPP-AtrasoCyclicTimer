@@ -78,7 +78,8 @@ class Client
             string disconnectorStrategyIn, string disconnectorStrategyOut, int quantityDisconnect,
 			string connectorStrategy, unsigned int minimalBandwidthToBeMyIN, int timeToRemovePeerOutWorseBand,
 			string chunkSchedulerStrategy, string messageSendScheduler, string messageReceptionScheduler,
-			int maxPartnersOutFREE, unsigned int outLimitToSeparateFree, unsigned int delayToSend);
+			int maxPartnersOutFREE, unsigned int outLimitToSeparateFree, 
+            unsigned int minimumDelay, unsigned int maximumDelay);
         virtual void Ping();
         void CyclicTimers();
         void PeerCtoPeerA();
@@ -146,7 +147,8 @@ class Client
 		uint32_t bootStrapID_Autentic;
 
 
-        unsigned int delayToSend; // Parâmetro para atraso de envio.
+        unsigned int minimumDelay; // Parâmetro para atraso de envio, valor mínimo.
+        unsigned int maximumDelay; // Parâmetro para atraso de envio, valor máximo.
         
 		//ECM
 		Disconnector* disconnectorIn;

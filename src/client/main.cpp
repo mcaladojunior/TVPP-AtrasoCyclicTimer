@@ -66,7 +66,8 @@ int main (int argc, char* argv[])
     int limitDownload = -1;
     int limitUpload = -1;
 
-    unsigned int delayToSend = 0; //Atraso.
+    unsigned int minimumDelay = 0; //Atraso.
+    unsigned int maximumDelay = 500; //Atraso.
 
     																// ** Used for disconnector
 	string disconnectorStrategyIn = "None";                         //ECM separate In and Out to be possible disconnect only Out or In or both
@@ -141,7 +142,8 @@ int main (int argc, char* argv[])
             cout <<"  --leakyBucketDataFilter       forces data packets only to pass through upload leaky bucket"<<endl;
             cout <<"  --serverCandidate             permits that peer becomes a auxiliary server on parallel network"<<endl;
             cout <<"                  ***           "<<endl;
-            cout <<"  --delayToSend [0-500]         define a delay in milliseconds to send messages (default: 0).           "<<endl;
+            cout <<"  --minimumDelay [0-500]        define a minimum delay (in milliseconds) to send messages (default: 0)."<<endl;
+            cout <<"  --maximumDelay [0-500]        define a maximum delay (in milliseconds) to send messages (default: 0)."<<endl;
             exit(1);
         }
         else
@@ -331,10 +333,15 @@ int main (int argc, char* argv[])
         {
             XPConfig::Instance()->SetBool("serverCandidate", true);
         }
-        else if (swtc=="--delayToSend") //Atraso.
+        else if (swtc=="--minimumDelay") //Atraso.
         {
             optind++;
-            delayToSend = atoi(argv[optind]);
+            minimumDelay = atoi(argv[optind]);
+        }
+        else if (swtc=="--maximumDelay") //Atraso.
+        {
+            optind++;
+            maximumDelay = atoi(argv[optind]);
         }
         else
         {
@@ -348,21 +355,21 @@ int main (int argc, char* argv[])
                                 peerPort, streamingPort, mode, bufferSize, 
                                 maxPartnersIn, maxPartnersOut, windowOfInterest, requestLimit, ttlIn, ttlOut, maxRequestAttempt, tipOffsetTime, limitDownload, limitUpload,
                                 disconnectorStrategyIn, disconnectorStrategyOut, quantityDisconnect, connectorStrategy, minimalBandwidthToBeMyIN, timeToRemovePeerOutWorseBand,
-								chunkSchedulerStrategy, messageSendScheduler, messageReceiveScheduler, maxPartnersOutFREE, outLimitToSeparateFree, delayToSend);
+								chunkSchedulerStrategy, messageSendScheduler, messageReceiveScheduler, maxPartnersOutFREE, outLimitToSeparateFree, minimumDelay, maximumDelay);
     
     boost::thread TPING(boost::bind(&Client::Ping, &clientInstance));
     boost::thread TUDPSTART(boost::bind(&Client::UDPStart, &clientInstance));
     boost::thread TUDPRECEIVE(boost::bind(&Client::UDPReceive, &clientInstance));
     
     //Atraso...
-    if (delayToSend == 0)
+    //If delay parameters was not settup (is default), execute the normal thread to send udp msgs...
+    if (minimumDelay == 0 && maximumDelay == 500)
     {
-        //If delayToSend parameter was not settup, execute the normal thread to send udp msgs...
         boost::thread TUDPSEND(boost::bind(&Client::UDPSend, &clientInstance));
     }
     else
     {
-        // If delayToSend parameter was settup, execute a thread to send the msgs with delay...        
+        // If delay parameters was settup, execute a thread to send the msgs with delay...        
         boost::thread TUDPSENDDELAY(boost::bind(&Client::UDPSendWithDelay, &clientInstance));
     }
 

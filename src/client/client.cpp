@@ -22,7 +22,8 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
 			string connectorStrategy, unsigned int minimalBandwidthToBeMyIN,
 			int timeToRemovePeerOutWorseBand, string chunkSchedulerStrategy,
             string messageSendScheduler, string messageReceiveScheduler,
-			int maxPartnersOutFREE, unsigned int outLimitToSeparateFree, unsigned int delayToSend)
+			int maxPartnersOutFREE, unsigned int outLimitToSeparateFree, 
+            unsigned int minimumDelay, unsigned int maximumDelay)
 {
     cout <<"Starting Client Version["<<VERSION<<"]" <<endl;
     Bootstrap_IP = host_ip;
@@ -51,7 +52,8 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
     this->configurarBootID = true;
     this->timeToRemovePeerOutWorseBand = timeToRemovePeerOutWorseBand;
 
-    this->delayToSend = delayToSend; // Parâmetro para atraso de envio.
+    this->minimumDelay = minimumDelay; //Atraso.
+    this->maximumDelay = maximumDelay; //Atraso.
 
     if (limitDownload >= 0)
         this->leakyBucketDownload = new LeakyBucket(limitDownload);
@@ -1703,10 +1705,11 @@ void Client::UDPSendWithDelay()
 {
     boost::xtime xt;
     unsigned int sendSchedulerSize = 0;
-    unsigned int step = (delayToSend*1000000);
 
     while(!quit) 
     {
+        unsigned int step = (rand()%(maximumDelay-minimumDelay)+minimumDelay);
+
         boost::xtime_get(&xt, boost::TIME_UTC);
         xt.nsec += step;
 
