@@ -67,7 +67,7 @@ int main (int argc, char* argv[])
     int limitUpload = -1;
 
     unsigned int minimumDelay = 0; //Atraso.
-    unsigned int maximumDelay = 500; //Atraso.
+    unsigned int maximumDelay = 0; //Atraso.
 
     																// ** Used for disconnector
 	string disconnectorStrategyIn = "None";                         //ECM separate In and Out to be possible disconnect only Out or In or both
@@ -143,7 +143,7 @@ int main (int argc, char* argv[])
             cout <<"  --serverCandidate             permits that peer becomes a auxiliary server on parallel network"<<endl;
             cout <<"                  ***           "<<endl;
             cout <<"  --minimumDelay [0-500]        define a minimum delay (in milliseconds) to send messages (default: 0)."<<endl;
-            cout <<"  --maximumDelay [0-500]        define a maximum delay (in milliseconds) to send messages (default: 500)."<<endl;
+            cout <<"  --maximumDelay [0-500]        define a maximum delay (in milliseconds) to send messages (default: 0)."<<endl;
             exit(1);
         }
         else
@@ -363,7 +363,7 @@ int main (int argc, char* argv[])
     
     //Atraso...
     //If delay parameters was not settup (is default), execute the normal thread to send udp msgs...
-    if (minimumDelay == 0 && maximumDelay == 500)
+    if (minimumDelay == 0 && maximumDelay == 0)
     {
         boost::thread TUDPSEND(boost::bind(&Client::UDPSend, &clientInstance));
     }
