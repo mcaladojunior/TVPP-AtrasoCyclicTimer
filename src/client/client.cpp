@@ -1708,10 +1708,9 @@ void Client::UDPSendWithDelay()
 
     while(!quit) 
     {
-        unsigned int step = (rand()%(maximumDelay-minimumDelay)+minimumDelay);
-
         boost::xtime_get(&xt, boost::TIME_UTC);
-        xt.nsec += step;
+
+        xt.nsec += rand()%(maximumDelay-minimumDelay)+minimumDelay;
 
         sendSchedulerSize = udp->GetSendSchedulerSize();
 

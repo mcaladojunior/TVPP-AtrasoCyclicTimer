@@ -143,7 +143,7 @@ int main (int argc, char* argv[])
             cout <<"  --serverCandidate             permits that peer becomes a auxiliary server on parallel network"<<endl;
             cout <<"                  ***           "<<endl;
             cout <<"  --minimumDelay [0-500]        define a minimum delay (in milliseconds) to send messages (default: 0)."<<endl;
-            cout <<"  --maximumDelay [0-500]        define a maximum delay (in milliseconds) to send messages (default: 0)."<<endl;
+            cout <<"  --maximumDelay [0-500]        define a maximum delay (in milliseconds) to send messages (default: 500)."<<endl;
             exit(1);
         }
         else
