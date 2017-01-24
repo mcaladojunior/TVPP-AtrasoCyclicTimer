@@ -54,7 +54,6 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
 
     this->minimumDelay = minimumDelay; //Atraso.
     this->maximumDelay = maximumDelay; //Atraso.
-    this->sendQueue = false;
 
     if (limitDownload >= 0)
         this->leakyBucketDownload = new LeakyBucket(limitDownload);
@@ -231,33 +230,29 @@ void Client::CyclicTimers()
 {
     boost::xtime xt;
     uint16_t cycle = 0;
-    uint32_t step = 1000000; //1mS++
+    uint32_t step = 100000000; //100mS++
     uint8_t  mergeCSA_Temp;
     uint8_t removeWorsePartnerTemp;
     mergeCSA_Temp = 0;                   //ECM
     removeWorsePartnerTemp = this->timeToRemovePeerOutWorseBand;          //ECM
-    unsigned int sort = 0;
 
     while (!quit)
     {
         boost::xtime_get(&xt, boost::TIME_UTC);
         xt.nsec += step;
         
-        if(cycle % 100 == 0)
+        //Each 100mS
+        for (list<Temporizable*>::iterator it = temporizableList.begin(); it != temporizableList.end(); it++)
         {
-            //Each 100mS
-            for (list<Temporizable*>::iterator it = temporizableList.begin(); it != temporizableList.end(); it++)
-            {
-                ((Temporizable*)*it)->UpdateTimer(step);
-            }
-
-            if (playerBufferDuration > step/100000000)
-                playerBufferDuration -= step/100000000;
-            else
-                playerBufferDuration = 0;
+            ((Temporizable*)*it)->UpdateTimer(step);
         }
 
-        if (cycle % 1000 == 0)     //Each 1s
+        if (playerBufferDuration > step/1000000)
+            playerBufferDuration -= step/1000000;
+        else
+            playerBufferDuration = 0;
+        
+        if (cycle % 10 == 0)     //Each 1s
         {
             downloadPerSecDone = 0;
             uploadPerSecDone = 0;
@@ -282,31 +277,14 @@ void Client::CyclicTimers()
             }
         }
 
-        if (cycle % (1000 * 30) == 0)     //Each 30s
+        if (cycle % (10 * 30) == 0)     //Each 30s
         {
         	peerManager.ShowPeerList();
         }
-
-        if(cycle % sort == 0)
-        {
-            this->sendQueue = true;
-            sort += rand()%(this->maximumDelay-this->minimumDelay)+this->minimumDelay;            
-        }
         
         cycle++;
-        if (cycle >= 1000000)    //Reset @1000s
-        {
+        if (cycle >= 10000)    //Reset @1000s
             cycle = 0;
-            if(sort > 1000000)
-            {
-                sort -= 1000000;
-            }
-            else
-            {
-                sort = rand()%(this->maximumDelay-this->minimumDelay)+this->minimumDelay;               
-            }
-        }
-
         boost::thread::sleep(xt);
     }
 }
@@ -1697,9 +1675,6 @@ void Client::UDPReceive()
 
 void Client::UDPSend()
 {
-    IMessageScheduler* chunksQueue = new FIFOMessageScheduler();
-    unsigned int queueSize = 0;
-
     while(true)
     {
         AddressedMessage* aMessage = udp->GetNextMessageToSend();
@@ -1713,31 +1688,14 @@ void Client::UDPSend()
                     if (!XPConfig::Instance()->GetBool("leakyBucketDataFilter") || aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
                         while (!leakyBucketUpload->DecToken(aMessage->GetMessage()->GetSize())); //while leaky bucket cannot provide
                 }
-                
-                if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
-                {
-                    chunksQueue.Push(aMessage);
-                }
-                else 
-                {       
-                    udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
-                }
-
-                if(this->sendQueue) 
-                {
-                    queueSize = chunksQueue.GetSize();
-                    while(queueSize > 0) 
-                    {
-                        aMessage = chunksQueue.Pop();
-
-                        udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
-
-                        chunksSent++;
-
-                        queueSize--;
-                    }
-                    this->sendQueue = false;
-                }               
+                udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
+                /*ECM Correção no controle de banda.
+                 * Inicialmente, a variável chunksSent estava sendo identada quando era chegava um pedido por chunk, e não
+                 * quando efetivamente o chunck era enviado. Assim, movemos a identação para esse código, que configura realiza o controle.
+                 * Neste metodo, inserimos apenas as duas linhas que se seguem.
+                 */
+                if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA)
+                   chunksSent++;
             }
         }
     }
