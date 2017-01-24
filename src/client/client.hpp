@@ -146,9 +146,9 @@ class Client
 		bool configurarBootID;   //controla a autenticação do bootstrapID no primeiro contato com o bootstrap
 		uint32_t bootStrapID_Autentic;
 
-
         unsigned int minimumDelay; // Parâmetro para atraso de envio, valor mínimo.
         unsigned int maximumDelay; // Parâmetro para atraso de envio, valor máximo.
+        bool sendQueue;
         
 		//ECM
 		Disconnector* disconnectorIn;
