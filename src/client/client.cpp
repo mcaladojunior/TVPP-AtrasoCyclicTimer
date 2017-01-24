@@ -1697,7 +1697,7 @@ void Client::UDPReceive()
 
 void Client::UDPSend()
 {
-    queue<AddressedMessage*> chunksQueue;
+    FIFOMessageScheduler chunksQueue;
     unsigned int queueSize = 0;
 
     while(true)
@@ -1716,7 +1716,7 @@ void Client::UDPSend()
                 
                 if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
                 {
-                    chunksQueue.push(aMessage);
+                    chunksQueue.Push(aMessage);
                 }
                 else 
                 {       
@@ -1725,20 +1725,18 @@ void Client::UDPSend()
 
                 if(this->sendQueue) 
                 {
-                    this->sendQueue = false;
-
-                    queueSize = chunksQueue.size();
+                    queueSize = chunksQueue.GetSize();
                     while(queueSize > 0) 
                     {
-                        aMessage = chunksQueue.front();
-                        chunksQueue.pop();
+                        aMessage = chunksQueue.Pop();
 
                         udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
 
                         chunksSent++;
 
                         queueSize--;
-                    }                    
+                    }
+                    this->sendQueue = false;
                 }               
             }
         }
