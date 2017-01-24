@@ -1697,7 +1697,7 @@ void Client::UDPReceive()
 
 void Client::UDPSend()
 {
-    IMessageScheduler* chunksQueue = new FIFOMessageScheduler();
+    FIFOMessageScheduler chunksQueue;
     unsigned int queueSize = 0;
 
     while(true)
