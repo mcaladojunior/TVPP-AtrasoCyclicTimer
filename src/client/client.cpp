@@ -251,8 +251,8 @@ void Client::CyclicTimers()
                 ((Temporizable*)*it)->UpdateTimer(step);
             }
 
-            if (playerBufferDuration > step/10000)
-                playerBufferDuration -= step/10000;
+            if (playerBufferDuration > step/100000000)
+                playerBufferDuration -= step/100000000;
             else
                 playerBufferDuration = 0;
         }
@@ -1730,16 +1730,15 @@ void Client::UDPSend()
                     queueSize = chunksQueue.size();
                     while(queueSize > 0) 
                     {
-                        AddressedMessage* chunk = chunksQueue.front();
+                        aMessage = chunksQueue.front();
                         chunksQueue.pop();
 
-                        udp->Send(chunk->GetAddress(),chunk->GetMessage()->GetFirstByte(),chunk->GetMessage()->GetSize());
+                        udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
 
                         chunksSent++;
 
                         queueSize--;
-                    }
-                    
+                    }                    
                 }               
             }
         }
