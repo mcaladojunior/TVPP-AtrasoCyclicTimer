@@ -60,7 +60,7 @@
 #include "../common/Scheduler/RandomMessageScheduler.hpp"
 
 #include <queue>
-#include "AddressedMessage.hpp"
+#include "../common/AddressedMessage.hpp"
 #include <fstream>
 
 using namespace std;
