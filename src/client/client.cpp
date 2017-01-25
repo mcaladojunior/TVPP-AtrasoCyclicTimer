@@ -238,9 +238,8 @@ void Client::CyclicTimers()
     mergeCSA_Temp = 0;                   //ECM
     removeWorsePartnerTemp = this->timeToRemovePeerOutWorseBand;          //ECM
     
-    unsigned int randDelay = 1;
-    string name = "randDelay"+this->peers_UDP_PORT+".txt";
-    ofstream myfile (name.c_str());
+    unsigned int randDelay = 0;
+    ofstream myfile ("randDelay.txt");
     unsigned int cycleDelay = 0;
     unsigned int countDelay = 0;
     unsigned int sumRandDelay = 0;
@@ -319,9 +318,10 @@ void Client::CyclicTimers()
 
     if (myfile.is_open())
     {
-        myfile << "# Average delay: " << (sumRandDelay/countDelay) << endl;    
-        myfile.close();            
-    }    
+        myfile << "# Average delay: " << (sumRandDelay/countDelay) << endl;                
+    }
+
+    myfile.close();
 }
 
 /**
