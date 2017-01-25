@@ -59,7 +59,7 @@
 #include "../common/Scheduler/CDFMessageScheduler.hpp"
 #include "../common/Scheduler/RandomMessageScheduler.hpp"
 
-//#include <queue>
+#include <queue>
 //#include "../common/AddressedMessage.hpp"
 #include <fstream>
 
@@ -153,7 +153,7 @@ class Client
         unsigned int minimumDelay; // Parâmetro para atraso de envio, valor mínimo.
         unsigned int maximumDelay; // Parâmetro para atraso de envio, valor máximo.
         bool sendChunks;
-        //queue<AddressedMessage*> chunksQueue;
+        queue<AddressedMessage*> chunksQueue;
         
 		//ECM
 		Disconnector* disconnectorIn;
