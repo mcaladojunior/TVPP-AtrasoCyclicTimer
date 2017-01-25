@@ -52,8 +52,10 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
     this->configurarBootID = true;
     this->timeToRemovePeerOutWorseBand = timeToRemovePeerOutWorseBand;
 
-    this->minimumDelay = minimumDelay; //Atraso.
-    this->maximumDelay = maximumDelay; //Atraso.
+    // ATRASO
+    this->minimumDelay = minimumDelay;
+    this->maximumDelay = maximumDelay;
+    this->sendChunks = false;
 
     if (limitDownload >= 0)
         this->leakyBucketDownload = new LeakyBucket(limitDownload);
@@ -235,6 +237,12 @@ void Client::CyclicTimers()
     uint8_t removeWorsePartnerTemp;
     mergeCSA_Temp = 0;                   //ECM
     removeWorsePartnerTemp = this->timeToRemovePeerOutWorseBand;          //ECM
+    
+    unsigned int randDelay = 0;
+    ofstream myfile ("randDelay.txt");
+    unsigned int cycleDelay = 0;
+    unsigned int countDelay = 0;
+    unsigned int sumRandDelay = 0;
 
     while (!quit)
     {
@@ -284,11 +292,36 @@ void Client::CyclicTimers()
         	peerManager.ShowPeerList();
         }
         
+        if(cycleDelay == randDelay)
+        {
+            randDelay = rand()%(this->maximumDelay-this->minimumDelay)+this->minimumDelay;
+            countDelay++;
+            sumRandDelay += randDelay;
+
+            if (myfile.is_open())
+            {
+                myfile << countDelay << "\t" << randDelay << "\t" << sumRandDelay << endl;                
+            }
+
+            cycleDelay = 0;
+        }
+
         cycle++;
+        cycleDelay++;
         if (cycle >= 1000000)    //Reset @1000s
+        {
             cycle = 0;
+        }
+
         boost::thread::sleep(xt);
     }
+
+    if (myfile.is_open())
+    {
+        myfile << "# Average delay: " << (sumRandDelay/countDelay) << endl;                
+    }
+
+    myfile.close();
 }
 
 /**

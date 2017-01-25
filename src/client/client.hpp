@@ -59,6 +59,9 @@
 #include "../common/Scheduler/CDFMessageScheduler.hpp"
 #include "../common/Scheduler/RandomMessageScheduler.hpp"
 
+#include <queue>
+#include "AddressedMessage.hpp"
+#include <fstream>
 
 using namespace std;
 
@@ -146,9 +149,11 @@ class Client
 		bool configurarBootID;   //controla a autenticação do bootstrapID no primeiro contato com o bootstrap
 		uint32_t bootStrapID_Autentic;
 
-
+        // ATRASO
         unsigned int minimumDelay; // Parâmetro para atraso de envio, valor mínimo.
         unsigned int maximumDelay; // Parâmetro para atraso de envio, valor máximo.
+        bool sendChunks;
+        queue<AddressedMessage*> chunksQueue;
         
 		//ECM
 		Disconnector* disconnectorIn;
