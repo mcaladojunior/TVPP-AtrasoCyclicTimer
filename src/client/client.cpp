@@ -239,7 +239,8 @@ void Client::CyclicTimers()
     removeWorsePartnerTemp = this->timeToRemovePeerOutWorseBand;          //ECM
     
     unsigned int randDelay = 0;
-    ofstream myfile ("randDelay.txt");
+    string name = "randDelay"+this->peers_UDP_PORT+".txt";
+    ofstream myfile (name.c_str());
     unsigned int cycleDelay = 0;
     unsigned int countDelay = 0;
     unsigned int sumRandDelay = 0;
@@ -290,6 +291,10 @@ void Client::CyclicTimers()
         if (cycle % (1000 * 30) == 0)     //Each 30s
         {
         	peerManager.ShowPeerList();
+            if (myfile.is_open())
+            {
+                myfile << "# Average delay: " << (sumRandDelay/countDelay) << endl;                
+            }
         }
         
         if(cycleDelay == randDelay)
@@ -314,14 +319,7 @@ void Client::CyclicTimers()
         }
 
         boost::thread::sleep(xt);
-    }
-
-    if (myfile.is_open())
-    {
-        myfile << "# Average delay: " << (sumRandDelay/countDelay) << endl;                
-    }
-
-    myfile.close();
+    }    
 }
 
 /**
