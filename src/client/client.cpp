@@ -230,7 +230,7 @@ void Client::CyclicTimers()
 {
     boost::xtime xt;
     uint16_t cycle = 0;
-    uint32_t step = 100000000; //100mS++
+    uint32_t step = 1000000; //1mS++
     uint8_t  mergeCSA_Temp;
     uint8_t removeWorsePartnerTemp;
     mergeCSA_Temp = 0;                   //ECM
@@ -241,18 +241,20 @@ void Client::CyclicTimers()
         boost::xtime_get(&xt, boost::TIME_UTC);
         xt.nsec += step;
         
-        //Each 100mS
-        for (list<Temporizable*>::iterator it = temporizableList.begin(); it != temporizableList.end(); it++)
-        {
-            ((Temporizable*)*it)->UpdateTimer(step);
+        if(cycle % 100 == 0) //Each 100mS
+        {            
+            for (list<Temporizable*>::iterator it = temporizableList.begin(); it != temporizableList.end(); it++)
+            {
+                ((Temporizable*)*it)->UpdateTimer(step);
+            }
+
+            if (playerBufferDuration > step/10000)
+                playerBufferDuration -= step/10000;
+            else
+                playerBufferDuration = 0;
         }
 
-        if (playerBufferDuration > step/1000000)
-            playerBufferDuration -= step/1000000;
-        else
-            playerBufferDuration = 0;
-        
-        if (cycle % 10 == 0)     //Each 1s
+        if (cycle % 1000 == 0) //Each 1s
         {
             downloadPerSecDone = 0;
             uploadPerSecDone = 0;
@@ -277,13 +279,13 @@ void Client::CyclicTimers()
             }
         }
 
-        if (cycle % (10 * 30) == 0)     //Each 30s
+        if (cycle % (1000 * 30) == 0)     //Each 30s
         {
         	peerManager.ShowPeerList();
         }
         
         cycle++;
-        if (cycle >= 10000)    //Reset @1000s
+        if (cycle >= 1000000)    //Reset @1000s
             cycle = 0;
         boost::thread::sleep(xt);
     }
