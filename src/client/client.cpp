@@ -231,8 +231,8 @@ bool Client::ConnectToBootstrap()
 void Client::CyclicTimers()
 {
     boost::xtime xt;
-    uint32_t cycle = 0;
-    uint32_t step = 1000000; //1mS++
+    unsigned int cycle = 0;
+    unsigned int step = 1000000; //1mS++
     uint8_t  mergeCSA_Temp;
     uint8_t removeWorsePartnerTemp;
     mergeCSA_Temp = 0;                   //ECM
@@ -253,8 +253,8 @@ void Client::CyclicTimers()
                 ((Temporizable*)*it)->UpdateTimer(step);
             }
 
-            if (playerBufferDuration > step/10000)
-                playerBufferDuration -= step/10000;
+            if (playerBufferDuration > step/1000000)
+                playerBufferDuration -= step/1000000;
             else
                 playerBufferDuration = 0;
         }
