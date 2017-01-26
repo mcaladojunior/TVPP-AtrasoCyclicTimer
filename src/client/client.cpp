@@ -231,7 +231,7 @@ bool Client::ConnectToBootstrap()
 void Client::CyclicTimers()
 {
     boost::xtime xt;
-    uint16_t cycle = 0;
+    uint32_t cycle = 0;
     uint32_t step = 1000000; //1mS++
     uint8_t  mergeCSA_Temp;
     uint8_t removeWorsePartnerTemp;
@@ -239,12 +239,8 @@ void Client::CyclicTimers()
     removeWorsePartnerTemp = this->timeToRemovePeerOutWorseBand;          //ECM
     
     unsigned int randDelay = 0;
-    string name = "randDelay"+this->peers_UDP_PORT+".txt";
-    ofstream myfile (name.c_str());
     unsigned int cycleDelay = 0;
-    unsigned int countDelay = 0;
-    unsigned int sumRandDelay = 0;
-
+    
     while (!quit)
     {
         boost::xtime_get(&xt, boost::TIME_UTC);
@@ -296,14 +292,7 @@ void Client::CyclicTimers()
         if(cycleDelay == randDelay)
         {
             randDelay = rand()%(this->maximumDelay-this->minimumDelay)+this->minimumDelay;
-            countDelay++;
-            sumRandDelay += randDelay;
-
-            if (myfile.is_open())
-            {
-                myfile << countDelay << "\t" << randDelay << "\t" << sumRandDelay << endl;                
-            }
-
+            
             this->sendChunks = true;
 
             cycleDelay = 0;
@@ -1720,7 +1709,6 @@ void Client::UDPSend()
                         while (!leakyBucketUpload->DecToken(aMessage->GetMessage()->GetSize())); //while leaky bucket cannot provide
                 }
                 
-
                 if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA)
                 {
                     this->chunksQueue.push(aMessage);
@@ -1728,22 +1716,24 @@ void Client::UDPSend()
                 else 
                 {
                     udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
-                }
-
-                if(this->sendChunks)
-                {
-                    this->sendChunks = false;
-
-                    while(this->chunksQueue.size() > 0)
-                    {
-                        AddressedMessage* msg = chunksQueue.front();
-                        chunksQueue.pop();
-
-                        udp->Send(msg->GetAddress(),msg->GetMessage()->GetFirstByte(),msg->GetMessage()->GetSize());
-                        chunksSent++; 
-                    }
-                }                   
+                }                                   
             }
+        }
+
+        if(this->sendChunks)
+        {
+            while(this->chunksQueue.size() > 0)
+            {
+                AddressedMessage* msg = chunksQueue.front();
+                if (msg->GetAge() < 0.5) // If message older than 500 ms
+                {
+                    udp->Send(msg->GetAddress(),msg->GetMessage()->GetFirstByte(),msg->GetMessage()->GetSize());
+                    chunksSent++; 
+                }
+                chunksQueue.pop();
+            }
+
+            this->sendChunks = false;
         }
     }
 }
