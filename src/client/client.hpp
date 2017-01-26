@@ -84,6 +84,7 @@ class Client
             unsigned int minimumDelay, unsigned int maximumDelay);
         virtual void Ping();
         void CyclicTimers();
+        void CyclicTimerSend();
         void PeerCtoPeerA();
         bool ColocarNaListaDePedidos();
         bool isServerCandidate(); //ECM

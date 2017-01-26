@@ -231,82 +231,82 @@ bool Client::ConnectToBootstrap()
 void Client::CyclicTimers()
 {
     boost::xtime xt;
-    unsigned int cycle = 0;
-    unsigned int step = 1000000; //1mS++
+    uint16_t cycle = 0;
+    uint32_t step = 100000000; //100mS++
     uint8_t  mergeCSA_Temp;
     uint8_t removeWorsePartnerTemp;
     mergeCSA_Temp = 0;                   //ECM
     removeWorsePartnerTemp = this->timeToRemovePeerOutWorseBand;          //ECM
-    
-    unsigned int randDelay = 0;
-    unsigned int cycleDelay = 0;
-    
+
     while (!quit)
     {
         boost::xtime_get(&xt, boost::TIME_UTC);
         xt.nsec += step;
         
-        if(cycle % 100 == 0) //Each 100mS
-        {            
-            for (list<Temporizable*>::iterator it = temporizableList.begin(); it != temporizableList.end(); it++)
-            {
-                ((Temporizable*)*it)->UpdateTimer(step);
-            }
-
-            if (playerBufferDuration > step/10000)
-                playerBufferDuration -= step/10000;
-            else
-                playerBufferDuration = 0;
+        //Each 100mS
+        for (list<Temporizable*>::iterator it = temporizableList.begin(); it != temporizableList.end(); it++)
+        {
+            ((Temporizable*)*it)->UpdateTimer(step);
         }
 
-        if (cycle % 1000 == 0) //Each 1s
+        if (playerBufferDuration > step/1000000)
+            playerBufferDuration -= step/1000000;
+        else
+            playerBufferDuration = 0;
+        
+        if (cycle % 10 == 0)     //Each 1s
         {
             downloadPerSecDone = 0;
             uploadPerSecDone = 0;
             peerManager.CheckPeerList();
 
             if ((XPConfig::Instance()->GetBool("removeWorsePartner")))
-            	if (!this->peerManager.GetRemoveWorsePartner()){
-            		if (removeWorsePartnerTemp == 0){
-            			this->peerManager.SetRemoveWorsePartner(true);
-            			removeWorsePartnerTemp = this->timeToRemovePeerOutWorseBand;
-            		}
-            		else
-            			removeWorsePartnerTemp--;
-            	}
+                if (!this->peerManager.GetRemoveWorsePartner()){
+                    if (removeWorsePartnerTemp == 0){
+                        this->peerManager.SetRemoveWorsePartner(true);
+                        removeWorsePartnerTemp = this->timeToRemovePeerOutWorseBand;
+                    }
+                    else
+                        removeWorsePartnerTemp--;
+                }
 
             //ECM time to Merge subnetworks
             if (this->peerManager.GetPeerManagerState() == SERVER_AUX_MESCLAR){
-            	cout << "Merge Interval... "<<(int) mergeCSA_Temp<<endl;
-            	if (mergeCSA_Temp == 0)
-            		mergeCSA_Temp = this->peerManager.Get_TimeDescPeerMerge();
-            	mergeCSA_Temp = this->peerManager.ExecMesc(mergeCSA_Temp);
+                cout << "Merge Interval... "<<(int) mergeCSA_Temp<<endl;
+                if (mergeCSA_Temp == 0)
+                    mergeCSA_Temp = this->peerManager.Get_TimeDescPeerMerge();
+                mergeCSA_Temp = this->peerManager.ExecMesc(mergeCSA_Temp);
             }
         }
 
-        if (cycle % (1000 * 30) == 0)     //Each 30s
+        if (cycle % (10 * 30) == 0)     //Each 30s
         {
-        	peerManager.ShowPeerList();
+            peerManager.ShowPeerList();
         }
         
-        if(cycleDelay == randDelay)
-        {
-            randDelay = rand()%(this->maximumDelay-this->minimumDelay)+this->minimumDelay;
-            
-            this->sendChunks = true;
-
-            cycleDelay = 0;
-        }
-
         cycle++;
-        cycleDelay++;
-        if (cycle >= 1000000)    //Reset @1000s
-        {
+        if (cycle >= 10000)    //Reset @1000s
             cycle = 0;
+        boost::thread::sleep(xt);
+    }
+}
+
+void Client::CyclicTimerSend()
+{
+    boost::xtime xt;
+    
+    while (!quit)
+    {
+        boost::xtime_get(&xt, boost::TIME_UTC);
+        xt.nsec += (rand()%(this->maximumDelay-this->minimumDelay)-this->minimumDelay)*1000000;
+        
+        if(!this->sendChunks) 
+        {
+            this->sendChunks = true;
         }
 
         boost::thread::sleep(xt);
-    }    
+    }
 }
 
 /**
@@ -1701,14 +1701,7 @@ void Client::UDPSend()
         if (aMessage)
         {
             if (aMessage->GetAge() < 0.5) // If message older than 500 ms
-            {
-                if (leakyBucketUpload) //If do exist leaky bucket 
-                {
-                    //If only data passes the leaky bucket
-                    if (!XPConfig::Instance()->GetBool("leakyBucketDataFilter") || aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
-                        while (!leakyBucketUpload->DecToken(aMessage->GetMessage()->GetSize())); //while leaky bucket cannot provide
-                }
-                
+            {               
                 if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA)
                 {
                     this->chunksQueue.push(aMessage);
@@ -1722,18 +1715,26 @@ void Client::UDPSend()
 
         if(this->sendChunks)
         {
+            this->sendChunks = false;
+
             while(this->chunksQueue.size() > 0)
             {
                 AddressedMessage* msg = chunksQueue.front();
                 if (msg->GetAge() < 0.5) // If message older than 500 ms
                 {
+                    if (leakyBucketUpload) //If do exist leaky bucket 
+                    {
+                        //If only data passes the leaky bucket
+                        if (!XPConfig::Instance()->GetBool("leakyBucketDataFilter") || aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
+                            while (!leakyBucketUpload->DecToken(aMessage->GetMessage()->GetSize())); //while leaky bucket cannot provide
+                    }
+
                     udp->Send(msg->GetAddress(),msg->GetMessage()->GetFirstByte(),msg->GetMessage()->GetSize());
+
                     chunksSent++; 
                 }
                 chunksQueue.pop();
-            }
-
-            this->sendChunks = false;
+            }           
         }
     }
 }

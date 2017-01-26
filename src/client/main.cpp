@@ -365,6 +365,7 @@ int main (int argc, char* argv[])
     //If delay parameters was not settup (is default), execute the normal thread to send udp msgs...
     //if (minimumDelay == 0 && maximumDelay == 0)
     //{
+    boost::thread TTIMERSEND(boost::bind(&Client::CyclicTimerSend, &clientInstance));
     boost::thread TUDPSEND(boost::bind(&Client::UDPSend, &clientInstance));
     //}
     //else
@@ -374,6 +375,8 @@ int main (int argc, char* argv[])
     //}
 
     boost::thread TTIMER(boost::bind(&Client::CyclicTimers, &clientInstance));
+
+
 
     if (mode == 1) //MODE_SERVER
     {
