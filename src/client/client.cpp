@@ -253,8 +253,8 @@ void Client::CyclicTimers()
                 ((Temporizable*)*it)->UpdateTimer(step);
             }
 
-            if (playerBufferDuration > step/1000000)
-                playerBufferDuration -= step/1000000;
+            if (playerBufferDuration > step/10000)
+                playerBufferDuration -= step/10000;
             else
                 playerBufferDuration = 0;
         }
@@ -1693,51 +1693,6 @@ void Client::UDPReceive()
     }
 }
 
-// void Client::UDPSend()
-// {
-//     while(true)
-//     {
-//         AddressedMessage* aMessage = udp->GetNextMessageToSend();
-//         if (aMessage)
-//         {
-//             if (aMessage->GetAge() < 0.5) // If message older than 500 ms
-//             {
-//                 if (leakyBucketUpload) //If do exist leaky bucket 
-//                 {
-//                     //If only data passes the leaky bucket
-//                     if (!XPConfig::Instance()->GetBool("leakyBucketDataFilter") || aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
-//                         while (!leakyBucketUpload->DecToken(aMessage->GetMessage()->GetSize())); //while leaky bucket cannot provide
-//                 }
-                
-//                 if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA)
-//                 {
-//                     this->chunksQueue.push(aMessage);
-//                 }
-//                 else 
-//                 {
-//                     udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
-//                 }                                   
-//             }
-//         }
-
-//         if(this->sendChunks)
-//         {
-//             while(this->chunksQueue.size() > 0)
-//             {
-//                 AddressedMessage* msg = chunksQueue.front();
-//                 if (msg->GetAge() < 0.5) // If message older than 500 ms
-//                 {
-//                     udp->Send(msg->GetAddress(),msg->GetMessage()->GetFirstByte(),msg->GetMessage()->GetSize());
-//                     chunksSent++; 
-//                 }
-//                 chunksQueue.pop();
-//             }
-
-//             this->sendChunks = false;
-//         }
-//     }
-// }
-
 void Client::UDPSend()
 {
     while(true)
@@ -1753,18 +1708,63 @@ void Client::UDPSend()
                     if (!XPConfig::Instance()->GetBool("leakyBucketDataFilter") || aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
                         while (!leakyBucketUpload->DecToken(aMessage->GetMessage()->GetSize())); //while leaky bucket cannot provide
                 }
-                udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
-                /*ECM Correção no controle de banda.
-                 * Inicialmente, a variável chunksSent estava sendo identada quando era chegava um pedido por chunk, e não
-                 * quando efetivamente o chunck era enviado. Assim, movemos a identação para esse código, que configura realiza o controle.
-                 * Neste metodo, inserimos apenas as duas linhas que se seguem.
-                 */
+                
                 if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA)
-                   chunksSent++;
+                {
+                    this->chunksQueue.push(aMessage);
+                }
+                else 
+                {
+                    udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
+                }                                   
             }
+        }
+
+        if(this->sendChunks)
+        {
+            while(this->chunksQueue.size() > 0)
+            {
+                AddressedMessage* msg = chunksQueue.front();
+                if (msg->GetAge() < 0.5) // If message older than 500 ms
+                {
+                    udp->Send(msg->GetAddress(),msg->GetMessage()->GetFirstByte(),msg->GetMessage()->GetSize());
+                    chunksSent++; 
+                }
+                chunksQueue.pop();
+            }
+
+            this->sendChunks = false;
         }
     }
 }
+
+// void Client::UDPSend()
+// {
+//     while(true)
+//     {
+//         AddressedMessage* aMessage = udp->GetNextMessageToSend();
+//         if (aMessage)
+//         {
+//             if (aMessage->GetAge() < 0.5) // If message older than 500 ms
+//             {
+//                 if (leakyBucketUpload) //If do exist leaky bucket 
+//                 {
+//                     //If only data passes the leaky bucket
+//                     if (!XPConfig::Instance()->GetBool("leakyBucketDataFilter") || aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
+//                         while (!leakyBucketUpload->DecToken(aMessage->GetMessage()->GetSize())); //while leaky bucket cannot provide
+//                 }
+//                 udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
+//                 /*ECM Correção no controle de banda.
+//                  * Inicialmente, a variável chunksSent estava sendo identada quando era chegava um pedido por chunk, e não
+//                  * quando efetivamente o chunck era enviado. Assim, movemos a identação para esse código, que configura realiza o controle.
+//                  * Neste metodo, inserimos apenas as duas linhas que se seguem.
+//                  */
+//                 if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA)
+//                    chunksSent++;
+//             }
+//         }
+//     }
+// }
 
 void Client::UDPSendWithDelay()
 {
