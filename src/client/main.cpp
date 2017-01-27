@@ -339,12 +339,17 @@ int main (int argc, char* argv[])
         {
             XPConfig::Instance()->SetBool("serverCandidate", true);
         }
-        else if (swtc=="--minimumDelay") //Atraso.
+        else if (swtc=="--minimumDelay") //Atraso minimo.
         {
             optind++;
             minimumDelay = atoi(argv[optind]);
         }
-        else if (swtc=="--maximumDelay") //Atraso.
+        else if (swtc=="--maximumDelay") //Atraso maximo.
+        {
+            optind++;
+            maximumDelay = atoi(argv[optind]);
+        }
+        else if (swtc=="--delayMode") //--delayMode
         {
             optind++;
             maximumDelay = atoi(argv[optind]);
