@@ -298,7 +298,7 @@ void Client::CyclicTimerSend()
     while (!quit)
     {
         boost::xtime_get(&xt, boost::TIME_UTC);
-        xt.nsec += (rand()%(this->maximumDelay-this->minimumDelay)-this->minimumDelay)*1000000;
+        xt.nsec += (rand()%(this->maximumDelay-this->minimumDelay)+this->minimumDelay)*1000000;
         
         if(!this->sendChunks) 
         {
@@ -1715,8 +1715,6 @@ void Client::UDPSend()
 
         if(this->sendChunks)
         {
-            this->sendChunks = false;
-
             while(this->chunksQueue.size() > 0)
             {
                 AddressedMessage* msg = chunksQueue.front();
@@ -1734,7 +1732,9 @@ void Client::UDPSend()
                     chunksSent++; 
                 }
                 chunksQueue.pop();
-            }           
+            }
+
+            this->sendChunks = false;           
         }
     }
 }
