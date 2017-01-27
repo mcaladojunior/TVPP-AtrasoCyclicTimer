@@ -68,6 +68,7 @@ int main (int argc, char* argv[])
 
     unsigned int minimumDelay = 0; //Atraso.
     unsigned int maximumDelay = 0; //Atraso.
+    unsigned int delayMode = 0;
 
     																// ** Used for disconnector
 	string disconnectorStrategyIn = "None";                         //ECM separate In and Out to be possible disconnect only Out or In or both
@@ -144,6 +145,11 @@ int main (int argc, char* argv[])
             cout <<"                  ***           "<<endl;
             cout <<"  --minimumDelay [0-500]        define a minimum delay (in milliseconds) to send messages (default: 0)."<<endl;
             cout <<"  --maximumDelay [0-500]        define a maximum delay (in milliseconds) to send messages (default: 0)."<<endl;
+            cout <<"  --delayMode [0-3]             define the sending messages method (default: 0)."<<endl;
+            cout <<"                                    **0: Original method UDPSend."<<endl;
+            cout <<"                                    **1: Method with isolated control messages and modified CyclicTimer for sending chunks."<<endl;
+            cout <<"                                    **2: Method with a thread to send control messages and another thread for sending chunks with delay."<<endl;
+            cout <<"                                    **3: Method with delay for all messages by sending them in batch."<<endl;
             exit(1);
         }
         else
@@ -361,23 +367,41 @@ int main (int argc, char* argv[])
     boost::thread TUDPSTART(boost::bind(&Client::UDPStart, &clientInstance));
     boost::thread TUDPRECEIVE(boost::bind(&Client::UDPReceive, &clientInstance));
     
-    //Atraso...
-    //If delay parameters was not settup (is default), execute the normal thread to send udp msgs...
-    //if (minimumDelay == 0 && maximumDelay == 0)
-    //{
-    boost::thread TTIMERSEND(boost::bind(&Client::CyclicTimerSend, &clientInstance));
-    boost::thread TUDPSEND(boost::bind(&Client::UDPSend, &clientInstance));
-    //}
-    //else
-    //{
-        // If delay parameters was settup, execute a thread to send the msgs with delay...        
-        //boost::thread TUDPSENDDELAY(boost::bind(&Client::UDPSendWithDelay, &clientInstance));
-    //}
+    //Atraso
+    // If delay parameters was not settup execute the original UDPSend method.
+    if (minimumDelay == 0 && maximumDelay == 0)
+    {    
+        boost::thread TUDPSEND(boost::bind(&Client::UDPSend, &clientInstance)); // Original UDPSend method.
+    }
+    else
+    {
+        if(delayMode == 0) // Original UDPSend method.
+        {
+            boost::thread TUDPSEND(boost::bind(&Client::UDPSend, &clientInstance));
+        }
+        else if(delayMode == 1) // Method with isolated control messages and modified CyclicTimer for sending chunks.
+        {
+            boost::thread TTIMERSEND(boost::bind(&Client::CyclicTimerSend, &clientInstance));
+            boost::thread TUDPSENDCYCLIC(boost::bind(&Client::UDPSendWithCyclicTimer, &clientInstance));            
+        }
+        else if(delayMode == 2) // Method with a thread to send control msgs and another thread for sending chunks with delay.
+        {
+            boost::thread TUDPSENDCONTROL(boost::bind(&Client::UDPSendControlMessage, &clientInstance));
+            boost::thread TUDPSENDCHUNK(boost::bind(&Client::UDPSendChunks, &clientInstance)); 
+        }
+        else if(delayMode == 3) // Method with delay for all messages by sending them in batch.
+        {
+            boost::thread TUDPSENDDELAY(boost::bind(&Client::UDPSendWithDelay, &clientInstance));
+        }
+        else 
+        {
+            cout << "Invalid delayMode. Try --help"<<endl;
+            exit(1);
+        }
+    }
 
     boost::thread TTIMER(boost::bind(&Client::CyclicTimers, &clientInstance));
-
-
-
+    
     if (mode == 1) //MODE_SERVER
     {
         boost::thread TGERAR(boost::bind(&Client::GerarDados, &clientInstance));

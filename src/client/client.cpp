@@ -56,6 +56,7 @@ void Client::ClientInit(char *host_ip, string TCP_server_port, string udp_port, 
     this->minimumDelay = minimumDelay;
     this->maximumDelay = maximumDelay;
     this->sendChunks = false;
+    this->chunksFIFOScheduler = new FIFOMessageScheduler();
 
     if (limitDownload >= 0)
         this->leakyBucketDownload = new LeakyBucket(limitDownload);
@@ -296,16 +297,15 @@ void Client::CyclicTimerSend()
     boost::xtime xt;
     
     while (!quit)
-    {
-        boost::xtime_get(&xt, boost::TIME_UTC);
-        xt.nsec += (rand()%(this->maximumDelay-this->minimumDelay)+this->minimumDelay)*1000000;
-        
+    {       
         if(!this->sendChunks) 
         {
-            this->sendChunks = true;
-        }
+            boost::xtime_get(&xt, boost::TIME_UTC);
+            xt.nsec += (rand()%(this->maximumDelay-this->minimumDelay)+this->minimumDelay)*1000000;
+            boost::thread::sleep(xt);
 
-        boost::thread::sleep(xt);
+            this->sendChunks = true;           
+        }        
     }
 }
 
@@ -1701,6 +1701,34 @@ void Client::UDPSend()
         if (aMessage)
         {
             if (aMessage->GetAge() < 0.5) // If message older than 500 ms
+            {
+                if (leakyBucketUpload) //If do exist leaky bucket 
+                {
+                    //If only data passes the leaky bucket
+                    if (!XPConfig::Instance()->GetBool("leakyBucketDataFilter") || aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
+                        while (!leakyBucketUpload->DecToken(aMessage->GetMessage()->GetSize())); //while leaky bucket cannot provide
+                }
+                udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
+                /*ECM Correção no controle de banda.
+                 * Inicialmente, a variável chunksSent estava sendo identada quando era chegava um pedido por chunk, e não
+                 * quando efetivamente o chunck era enviado. Assim, movemos a identação para esse código, que configura realiza o controle.
+                 * Neste metodo, inserimos apenas as duas linhas que se seguem.
+                 */
+                if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA)
+                   chunksSent++;
+            }
+        }
+    }
+}
+
+void Client::UDPSendWithCyclicTimer()
+{
+    while(true)
+    {
+        AddressedMessage* aMessage = udp->GetNextMessageToSend();
+        if (aMessage)
+        {
+            if (aMessage->GetAge() < 0.5) // If message older than 500 ms
             {               
                 if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA)
                 {
@@ -1739,33 +1767,74 @@ void Client::UDPSend()
     }
 }
 
-// void Client::UDPSend()
-// {
-//     while(true)
-//     {
-//         AddressedMessage* aMessage = udp->GetNextMessageToSend();
-//         if (aMessage)
-//         {
-//             if (aMessage->GetAge() < 0.5) // If message older than 500 ms
-//             {
-//                 if (leakyBucketUpload) //If do exist leaky bucket 
-//                 {
-//                     //If only data passes the leaky bucket
-//                     if (!XPConfig::Instance()->GetBool("leakyBucketDataFilter") || aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
-//                         while (!leakyBucketUpload->DecToken(aMessage->GetMessage()->GetSize())); //while leaky bucket cannot provide
-//                 }
-//                 udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
-//                 /*ECM Correção no controle de banda.
-//                  * Inicialmente, a variável chunksSent estava sendo identada quando era chegava um pedido por chunk, e não
-//                  * quando efetivamente o chunck era enviado. Assim, movemos a identação para esse código, que configura realiza o controle.
-//                  * Neste metodo, inserimos apenas as duas linhas que se seguem.
-//                  */
-//                 if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA)
-//                    chunksSent++;
-//             }
-//         }
-//     }
-// }
+void Client::UDPSendControlMessage()
+{
+    while(true)
+    {
+        AddressedMessage* aMessage = udp->GetNextMessageToSend();
+        if (aMessage)
+        {
+            if (aMessage->GetAge() < 0.5) // If message older than 500 ms
+            {
+                if (leakyBucketUpload) //If do exist leaky bucket 
+                {
+                    //If only data passes the leaky bucket
+                    if (!XPConfig::Instance()->GetBool("leakyBucketDataFilter") || aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
+                        while (!leakyBucketUpload->DecToken(aMessage->GetMessage()->GetSize())); //while leaky bucket cannot provide
+                }
+                
+                if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA)
+                {
+                    this->chunksFIFOScheduler->Push(aMessage);
+                }
+                else 
+                {
+                    udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
+                }
+            }
+        }
+    }
+}
+
+void Client::UDPSendChunks()
+{
+    boost::xtime xt;
+    unsigned int fifoSchedulerSize = 0;
+
+    while(true)
+    {
+        boost::xtime_get(&xt, boost::TIME_UTC);
+        xt.nsec += (rand()%(this->maximumDelay-this->minimumDelay)+this->minimumDelay)*1000000;
+
+        fifoSchedulerSize = this->chunksFIFOScheduler->GetSize();
+        if(fifoSchedulerSize > 0)
+        {
+            while(fifoSchedulerSize > 0)
+            {
+                AddressedMessage* aMessage = this->chunksFIFOScheduler->Pop();
+                if (aMessage)
+                {
+                    if (aMessage->GetAge() < 0.5) // If message older than 500 ms
+                    {
+                        if (leakyBucketUpload) //If do exist leaky bucket 
+                        {
+                            //If only data passes the leaky bucket
+                            if (!XPConfig::Instance()->GetBool("leakyBucketDataFilter") || aMessage->GetMessage()->GetOpcode() == OPCODE_DATA) 
+                                while (!leakyBucketUpload->DecToken(aMessage->GetMessage()->GetSize())); //while leaky bucket cannot provide
+                        }
+                        udp->Send(aMessage->GetAddress(),aMessage->GetMessage()->GetFirstByte(),aMessage->GetMessage()->GetSize());
+                        
+                        if (aMessage->GetMessage()->GetOpcode() == OPCODE_DATA)
+                           chunksSent++;
+                    }
+                }
+                fifoSchedulerSize--;
+            }
+        }
+
+        boost::thread::sleep(xt);
+    }
+}
 
 void Client::UDPSendWithDelay()
 {
@@ -1775,11 +1844,7 @@ void Client::UDPSendWithDelay()
     while(!quit) 
     {
         boost::xtime_get(&xt, boost::TIME_UTC);
-
-        if(this->maximumDelay-this->minimumDelay > 0)
-            xt.nsec += (rand()%(this->maximumDelay-this->minimumDelay)+this->minimumDelay)*1000000;
-        else
-            xt.nsec += this->minimumDelay*1000000;
+        xt.nsec += (rand()%(this->maximumDelay-this->minimumDelay)+this->minimumDelay)*1000000;
 
         sendSchedulerSize = udp->GetSendSchedulerSize();
 
