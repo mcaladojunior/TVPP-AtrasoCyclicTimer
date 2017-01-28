@@ -386,8 +386,8 @@ int main (int argc, char* argv[])
         }
         else if(delayMode == 1) // Method with isolated control messages and modified CyclicTimer for sending chunks.
         {
-            boost::thread TTIMERSEND(boost::bind(&Client::CyclicTimerSend, &clientInstance));
             boost::thread TUDPSENDCYCLIC(boost::bind(&Client::UDPSendWithCyclicTimer, &clientInstance));            
+            boost::thread TTIMERSEND(boost::bind(&Client::CyclicTimerSend, &clientInstance));
         }
         else if(delayMode == 2) // Method with a thread to send control msgs and another thread for sending chunks with delay.
         {
